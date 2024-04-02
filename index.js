@@ -2,11 +2,13 @@ import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import Sharp from "sharp";
 
-const PathPattern = /thumbnail\/(.+)_(w|h)([1-9][0-9]+)\.(webp|jpg)$/; // e.g  thumbnail/images/cover.jpg_w100.webp
+const PathPattern = /(.+?)_(w|h)([1-9][0-9]+)\.(webp|jpg)$/; // e.g  xxxx/cover.jpg_w100.webp
 
 // parameters
-const { BUCKET, URL } = process.env;
-const WHITELIST = process.env.WHITELIST ? Object.freeze(process.env.WHITELIST.split(" ")) : null;
+const { BUCKET, ENDPOINT } = process.env;
+const WHITELIST = process.env.WHITELIST
+  ? Object.freeze(process.env.WHITELIST.split(" "))
+  : null;
 
 const s3Client = new S3Client();
 
@@ -17,7 +19,9 @@ export const handler = async (event) => {
   }
 
   if (!PathPattern.test(path)) {
-    return errorResponse('Parameter "?path=" should look like: xxx.jpg_w100.webp');
+    return errorResponse(
+      'Parameter "?path=" should look like: xxx/xxx.jpg_w100.webp'
+    );
   }
 
   const parts = PathPattern.exec(path); // ['images/cover.jpg_w100.webp', 'images/cover.jpg', 'w', '100', 'webp']
@@ -31,7 +35,10 @@ export const handler = async (event) => {
 
   // Whitelist validation.
   if (WHITELIST && !WHITELIST.includes(resizeOption)) {
-    return errorResponse(`WHITELIST is set but does not contain the size parameter "${resizeOption}"`, 403);
+    return errorResponse(
+      `WHITELIST is set but does not contain the size parameter "${resizeOption}"`,
+      403
+    );
   }
 
   try {
@@ -47,14 +54,16 @@ export const handler = async (event) => {
 
     let fit = "inside";
 
-    let sharp = Sharp({ failOn: "none" }).resize(width, height, { withoutEnlargement: true, fit }).rotate();
+    let sharp = Sharp({ failOn: "none" })
+      .resize(width, height, { withoutEnlargement: true, fit })
+      .rotate();
 
     switch (format) {
       case "webp":
-        sharp = sharp.webp({quality:100});
+        sharp = sharp.webp({ quality: 100 });
         break;
       case "jpeg":
-        sharp = sharp.jpeg({quality:100});
+        sharp = sharp.jpeg({ quality: 100 });
         break;
     }
 
@@ -75,7 +84,7 @@ export const handler = async (event) => {
 
     return {
       statusCode: 301,
-      headers: { Location: `${URL}/${path}` },
+      headers: { Location: `${ENDPOINT}/${path}` },
     };
   } catch (e) {
     return errorResponse("Exception: " + e.message, e.statusCode || 400);
