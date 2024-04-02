@@ -41,7 +41,7 @@ https://github.com/sagidM/s3-resizer
             "HostName": "xxx.execute-api.us-east-2.amazonaws.com",  // 这里为api的域名
             "HttpRedirectCode": "307",
             "Protocol": "https",
-            "ReplaceKeyPrefixWith": "/default/s3_image_resize?path="  // 这里是api的路径，带上path参数
+            "ReplaceKeyPrefixWith": "default/s3_image_resize?path="  // 这里是api的路径，带上path参数
         }
     }
 ]
